@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RUTAFIX — Técnicos SAT</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F58C2A">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+:root {
+  --bg: #0D111C; --bg2: #141927; --bg3: #1C2333;
+  --border: #2A3347; --accent: #F58C2A; --accent2: #E06B10;
+  --danger: #E53E3E; --ok: #38A169;
+  --text: #E8EAF0; --muted: #6B7A99; --card: #1A2035;
+  --r: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* ─── LOGIN ─── */
+#login-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; }
+.login-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 3.5rem; letter-spacing: 6px; color: var(--accent); display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.login-sub { font-size: 0.8rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
+.tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 320px; margin-bottom: 16px; }
+.tech-btn { background: var(--card); border: 2px solid var(--border); border-radius: var(--r); padding: 18px 12px; color: var(--text); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 1px; cursor: pointer; text-align: center; transition: all 0.15s; }
+.tech-btn:active { border-color: var(--accent); background: rgba(245,140,42,0.08); }
+.tech-initial { width: 38px; height: 38px; background: var(--accent); color: #0D111C; border-radius: 50%; font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; }
+
+/* ─── HEADER ─── */
+.header { background: var(--bg2); border-bottom: 2px solid var(--accent); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.header-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.5rem; letter-spacing: 3px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+.header-user { font-size: 0.75rem; color: var(--muted); text-align: right; line-height: 1.3; cursor: pointer; }
+.header-user strong { color: var(--text); font-size: 0.85rem; display: block; }
+
+/* ─── NAV ─── */
+.nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 53px; z-index: 99; }
+.nav-btn { flex: 1; padding: 10px 4px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ─── SCREENS ─── */
+.screen { display: none; padding: 14px; padding-bottom: 90px; }
+.screen.active { display: block; }
+
+/* ─── BUTTONS ─── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px; border: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.95rem; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #0D111C; }
+.btn-primary:active { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: rgba(229,62,62,0.15); color: var(--danger); border: 1px solid rgba(229,62,62,0.3); }
+.btn-ok { background: rgba(56,161,105,0.15); color: var(--ok); border: 1px solid rgba(56,161,105,0.3); }
+.btn-sm { padding: 6px 10px; font-size: 0.8rem; }
+.btn-full { width: 100%; justify-content: center; margin-bottom: 8px; }
+
+/* ─── INPUTS ─── */
+.input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--muted); }
+select.input { cursor: pointer; }
+.field-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; display: block; }
+.field { margin-bottom: 12px; }
+
+/* ─── SECTION TITLE ─── */
+.section-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.section-title span { color: var(--accent); }
+
+/* ─── JERARQUÍA LUGARES ─── */
+.cat-block { margin-bottom: 10px; border-radius: var(--r); overflow: hidden; border: 1px solid var(--border); }
+.cat-header { background: var(--bg3); padding: 11px 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.cat-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 2px; text-transform: uppercase; flex: 1; color: var(--accent); }
+.cat-count { font-size: 0.75rem; color: var(--muted); }
+.cat-chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; }
+.cat-chevron.open { transform: rotate(180deg); }
+.cat-body { display: none; background: var(--bg2); }
+.cat-body.open { display: block; }
+.cat-actions { display: flex; gap: 8px; padding: 8px 14px 10px; border-top: 1px solid var(--border); }
+
+.company-block { border-top: 1px solid var(--border); }
+.company-header { padding: 9px 14px 9px 24px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; background: var(--bg2); }
+.company-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; flex: 1; color: var(--text); }
+.company-body { display: none; background: var(--card); }
+.company-body.open { display: block; }
+
+.comp-has-pend { background: rgba(229,62,62,0.12); border-left: 3px solid var(--danger); }
+.comp-has-pend .company-title { color: var(--danger); }
+
+.lugar-row { padding: 10px 14px 10px 36px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.lugar-row:active { background: var(--bg3); }
+.lugar-name { flex: 1; font-size: 0.9rem; }
+.pend-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+.pend-dot.zero { background: var(--ok); }
+
+/* ─── LUGAR EXPANDIDO ─── */
+.lugar-expanded { background: var(--bg3); border-top: 1px solid var(--border); padding: 12px 14px 12px 36px; animation: slideDown 0.2s ease; }
+@keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ─── PENDIENTES ─── */
+.pending-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.pending-item:last-of-type { border-bottom: none; }
+.pending-text { flex: 1; font-size: 0.9rem; line-height: 1.4; padding-top: 1px; }
+.pending-text.done { text-decoration: line-through; color: var(--muted); }
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; margin-top: 2px; }
+.add-pending-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-pending-row .input { flex: 1; }
+
+/* ─── RUTA ─── */
+.ruta-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; }
+.ruta-sep { color: var(--muted); font-size: 1.2rem; font-weight: 300; }
+.ruta-stop { position: relative; }
+.ruta-stop-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 14px; background: var(--bg3); border: none; border-radius: 8px; cursor: pointer; min-width: 88px; min-height: 52px; font-family: 'Barlow Condensed', sans-serif; transition: all 0.15s; }
+.ruta-stop-btn.has-pending { background: var(--danger); animation: pulse-red 2s infinite; }
+.ruta-stop-btn.active { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ruta-stop-name { font-size: 0.82rem; font-weight: 700; color: var(--text); text-align: center; line-height: 1.2; max-width: 110px; }
+.ruta-stop-sub { font-size: 0.62rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
+.ruta-stop-remove { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; background: var(--danger); border: none; border-radius: 50%; color: white; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; z-index: 10; }
+@keyframes pulse-red { 0%,100% { box-shadow:0 0 0 0 rgba(229,62,62,0.5); } 50% { box-shadow:0 0 0 6px rgba(229,62,62,0); } }
+
+.ruta-expanded { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 14px; animation: slideDown 0.2s ease; }
+.ruta-expanded-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; color: var(--accent); margin-bottom: 10px; letter-spacing: 1px; }
+
+/* ─── PANTALLA PENDIENTES ─── */
+.pend-lugar-card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--danger); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; }
+.pend-lugar-header { padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.pend-lugar-name { flex: 1; font-weight: 600; font-size: 0.95rem; }
+.pend-lugar-cat { font-size: 0.7rem; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+.pend-lugar-body { display: none; padding: 0 14px 12px; border-top: 1px solid var(--border); }
+.pend-lugar-body.open { display: block; }
+
+/* ─── SEARCH ROW ─── */
+.search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.search-row .input { flex: 1; }
+.mic-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; color: var(--muted); cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0; }
+.mic-btn.listening { background: rgba(229,62,62,0.15); border-color: var(--danger); color: var(--danger); animation: mic-pulse 1s infinite; }
+@keyframes mic-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+
+/* ─── LOC SELECTOR ─── */
+.loc-selector { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; max-height: 220px; overflow-y: auto; }
+.loc-selector-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.9rem; transition: background 0.1s; }
+.loc-selector-item:last-child { border-bottom: none; }
+.loc-selector-item:active { background: var(--border); }
+.loc-selector-item .sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+/* ─── MODAL ─── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: flex-end; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border-radius: 16px 16px 0 0; padding: 20px 16px 36px; width: 100%; max-height: 92vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+.modal-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+.modal-close { background: var(--bg3); border: none; color: var(--muted); width: 30px; height: 30px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* ─── EMPTY ─── */
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-icon { font-size: 2.5rem; margin-bottom: 8px; }
+.empty p { font-size: 0.9rem; line-height: 1.5; }
+
+/* ─── BOTTOM BAR ─── */
+.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); padding: 10px 16px; display: flex; gap: 8px; z-index: 98; }
+
+/* ─── TOAST ─── */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ok); color: white; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; padding: 10px 20px; border-radius: 99px; font-size: 0.9rem; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 300; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen">
+  <div class="login-logo">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#F58C2A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    RUTAFIX
+  </div>
+  <div class="login-sub">Técnicos SAT · Puertas Automáticas</div>
+  <div class="tech-grid" id="tech-grid"></div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app" style="display:none">
+  <div class="header">
+    <div class="header-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F58C2A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      RUTAFIX
+    </div>
+    <div class="header-user" onclick="logout()">
+      <strong id="header-name">—</strong>
+      <span>Cambiar ↩</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showScreen('ruta',this)">📍 RUTA</button>
+    <button class="nav-btn" onclick="showScreen('pendientes',this)">⚠️ PENDIENTES</button>
+    <button class="nav-btn" onclick="showScreen('lugares',this)">🏨 LUGARES</button>
+  </nav>
+
+  <!-- ── RUTA ── -->
+  <div id="screen-ruta" class="screen active" onclick="collapseOnTapOutside(event)">
+    <div class="section-title">Ruta de hoy <span id="ruta-date"></span></div>
+    <div id="ruta-chain" class="ruta-chain"></div>
+    <div id="ruta-expanded-area"></div>
+    <div id="ruta-empty" class="empty" style="display:none">
+      <div class="empty-icon">🗺️</div>
+      <p>Sin paradas.<br>Busca un lugar para añadirlo.</p>
+    </div>
+    <div style="margin-top:14px">
+      <div class="search-row">
+        <input class="input" id="ruta-search" placeholder="🔍 Añadir parada..." oninput="filterRutaSearch()" autocomplete="off">
+        <button class="mic-btn" id="ruta-mic" onclick="voiceSearch('ruta-search','filterRutaSearch')">🎤</button>
+      </div>
+      <div id="ruta-search-list" class="loc-selector" style="display:none"></div>
+    </div>
+    <div style="height:10px"></div>
+    <button class="btn btn-danger btn-sm" id="btn-clear-ruta" onclick="clearRuta()" style="display:none">🗑 Borrar toda la ruta</button>
+  </div>
+
+  <!-- ── PENDIENTES ── -->
+  <div id="screen-pendientes" class="screen">
+    <div class="section-title">Lugares con pendientes</div>
+    <div id="pend-screen-list"></div>
+    <div id="pend-screen-empty" class="empty" style="display:none">
+      <div class="empty-icon">✅</div>
+      <p>Sin reparaciones pendientes.<br>Todo en orden.</p>
+    </div>
+  </div>
+
+  <!-- ── LUGARES ── -->
+  <div id="screen-lugares" class="screen">
+    <div class="search-row">
+      <input class="input" id="loc-search" placeholder="🔍 Buscar lugar..." oninput="filterLugares()" autocomplete="off">
+      <button class="mic-btn" id="loc-mic" onclick="voiceSearch('loc-search','filterLugares')">🎤</button>
+    </div>
+    <div id="lugares-list"></div>
+    <div id="lugares-empty" class="empty" style="display:none">
+      <div class="empty-icon">📭</div><p>No se encontraron lugares.</p>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="btn btn-primary" style="flex:1" onclick="showAddLugarModal()">+ Nuevo lugar</button>
+  </div>
+</div>
+
+<!-- ═══ MODALES ═══ -->
+
+<!-- Añadir / editar lugar -->
+<div class="modal-overlay" id="modal-lugar">
+  <div class="modal">
+    <div class="modal-title" id="modal-lugar-title">Nuevo lugar <button class="modal-close" onclick="closeModal('modal-lugar')">✕</button></div>
+    <input type="hidden" id="edit-lugar-id">
+
+    <div class="field">
+      <label class="field-label">Categoría</label>
+      <div style="position:relative">
+        <div style="display:flex;gap:6px">
+          <input class="input" id="lugar-cat-input" placeholder="Escribe o elige categoría..." autocomplete="off"
+            oninput="showCatSuggestions()" onfocus="showCatSuggestions()">
+          <button class="btn btn-primary btn-sm" onclick="addCatFromInput()" style="flex-shrink:0">+</button>
+        </div>
+        <div id="cat-suggestions" class="loc-selector" style="display:none;position:relative;z-index:10"></div>
+      </div>
+    </div>
+
+    <div class="field" id="field-company">
+      <label class="field-label">Compañía (opcional)</label>
+      <div style="position:relative">
+        <div style="display:flex;gap:6px">
+          <input class="input" id="lugar-comp-input" placeholder="Escribe o elige compañía..." autocomplete="off"
+            oninput="showCompSuggestions()" onfocus="showCompSuggestions()">
+          <button class="btn btn-primary btn-sm" onclick="addCompFromInput()" style="flex-shrink:0">+</button>
+        </div>
+        <div id="comp-suggestions" class="loc-selector" style="display:none;position:relative;z-index:10"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Nombre del lugar</label>
+      <input class="input" id="lugar-name" placeholder="Hotel Gran Playa, Farmacia Central...">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Referencia / Dirección (opcional)</label>
+      <input class="input" id="lugar-ref" placeholder="Zona, calle, referencia...">
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="saveLugar()">Guardar lugar</button>
+    <button class="btn btn-danger btn-full" id="btn-delete-lugar" onclick="deleteLugar()" style="display:none">Eliminar lugar</button>
+  </div>
+</div>
+
+<!-- Editar nombre categoría -->
+<div class="modal-overlay" id="modal-edit-cat">
+  <div class="modal">
+    <div class="modal-title">Editar categoría <button class="modal-close" onclick="closeModal('modal-edit-cat')">✕</button></div>
+    <input type="hidden" id="edit-cat-key">
+    <div class="field"><label class="field-label">Nombre</label><input class="input" id="edit-cat-name"></div>
+    <button class="btn btn-primary btn-full" onclick="saveCatName()">Guardar</button>
+    <button class="btn btn-danger btn-full" onclick="deleteCat()">⚠️ Eliminar categoría y todo su contenido</button>
+  </div>
+</div>
+
+<!-- Editar nombre compañía -->
+<div class="modal-overlay" id="modal-edit-comp">
+  <div class="modal">
+    <div class="modal-title">Editar compañía <button class="modal-close" onclick="closeModal('modal-edit-comp')">✕</button></div>
+    <input type="hidden" id="edit-comp-cat">
+    <input type="hidden" id="edit-comp-key">
+    <div class="field"><label class="field-label">Nombre</label><input class="input" id="edit-comp-name"></div>
+    <button class="btn btn-primary btn-full" onclick="saveCompName()">Guardar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyChMXx5ZcleAo5oqzPvo1K_Af_wgQkh-LQ",
+  authDomain: "listify-16b5d.firebaseapp.com",
+  databaseURL: "https://listify-16b5d-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "listify-16b5d",
+  storageBucket: "listify-16b5d.firebasestorage.app",
+  messagingSenderId: "238610923350",
+  appId: "1:238610923350:web:cd5c2c3fb23b5c0afba0f7"
+};
+
+let fbApp, db;
+try { fbApp = firebase.app('rutafix'); } catch(e) { fbApp = firebase.initializeApp(firebaseConfig, 'rutafix'); }
+db = firebase.database(fbApp);
+
+const R = {
+  techs:  () => db.ref('rutafix/tecnicos'),
+  locs:   () => db.ref('rutafix/lugares'),
+  cats:   () => db.ref('rutafix/categorias'),
+  pend:   (lid) => db.ref(`rutafix/pendientes/${lid}`),
+  ruta:   (user) => db.ref(`rutafix/rutas/${user}`),
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let currentUser = null;
+let allLugares  = {};   // { id: {cat, catKey, comp, compKey, name, ref} }
+let allPend     = {};   // { locId: { pendId: {text,done} } }
+let allCats     = {};   // { catKey: {name} }
+let ruta        = [];   // [locId,...]
+let expandedStop = null;
+let expandedLugar = null; // en pantalla lugares
+let expandedPendLugar = null; // en pantalla pendientes
+
+// ══════════════════════════════════════════════
+// INIT / LOGIN
+// ══════════════════════════════════════════════
+window.onload = () => {
+  document.getElementById('ruta-date').textContent =
+    new Date().toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+  loadTechs();
+};
+
+const TECNICOS = [
+  { id: 'bernat',      name: 'BERNAT' },
+  { id: 'jordi',       name: 'JORDI' },
+  { id: 'juan_carlos', name: 'JUAN CARLOS' },
+  { id: 'bernat_fill', name: 'BERNAT FILL' },
+];
+
+function loadTechs() {
+  renderTechGrid(TECNICOS);
+  const saved = localStorage.getItem('rutafix_user');
+  if (saved) {
+    const found = TECNICOS.find(t => t.id === saved);
+    if (found) loginAs(found);
+  }
+}
+
+function renderTechGrid(techs) {
+  const grid = document.getElementById('tech-grid');
+  grid.innerHTML = '';
+  techs.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'tech-btn';
+    btn.innerHTML = `<div class="tech-initial">${t.name[0].toUpperCase()}</div>${t.name}`;
+    btn.onclick = () => loginAs(t);
+    grid.appendChild(btn);
+  });
+}
+
+function loginAs(tech) {
+  currentUser = tech;
+  localStorage.setItem('rutafix_user', tech.id);
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('header-name').textContent = tech.name.toUpperCase();
+  startListening();
+}
+
+function logout() {
+  localStorage.removeItem('rutafix_user');
+  currentUser = null; ruta = []; expandedStop = null;
+  db.ref('rutafix').off();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+// FIREBASE LISTENERS
+// ══════════════════════════════════════════════
+function startListening() {
+  R.cats().on('value', snap => {
+    allCats = {};
+    if (snap.exists()) snap.forEach(c => { allCats[c.key] = c.val(); });
+    renderLugares();
+  });
+
+  R.locs().on('value', snap => {
+    allLugares = {};
+    if (snap.exists()) snap.forEach(c => { allLugares[c.key] = c.val(); });
+    renderLugares();
+    renderRuta();
+    renderPendScreen();
+  });
+
+  db.ref('rutafix/pendientes').on('value', snap => {
+    allPend = {};
+    if (snap.exists()) snap.forEach(ls => {
+      allPend[ls.key] = {};
+      ls.forEach(ps => { allPend[ls.key][ps.key] = ps.val(); });
+    });
+    renderLugares();
+    renderRuta();
+    renderPendScreen();
+  });
+
+  R.ruta(currentUser.id).on('value', snap => {
+    ruta = snap.exists() ? (snap.val() || []) : [];
+    // Normalizar por si Firebase devuelve objeto
+    if (!Array.isArray(ruta)) ruta = Object.values(ruta);
+    renderRuta();
+  });
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function pendCount(locId) {
+  const p = allPend[locId];
+  if (!p) return 0;
+  return Object.values(p).filter(x => !x.done).length;
+}
+
+function saveRuta() {
+  R.ruta(currentUser.id).set(ruta);
+}
+
+// ══════════════════════════════════════════════
+// PANTALLA LUGARES — jerarquía Cat > Comp > Lugar
+// ══════════════════════════════════════════════
+function renderLugares(filter='') {
+  const list = document.getElementById('lugares-list');
+  const empty = document.getElementById('lugares-empty');
+  const q = filter.toLowerCase();
+
+  // Agrupar: cat → comp → [lugares]
+  const tree = {}; // { catKey: { name, comps: { compKey: { name, lugares: [{id,...}] } } } }
+
+  Object.entries(allLugares).forEach(([id, l]) => {
+    if (q && !(l.name||'').toLowerCase().includes(q) &&
+              !(l.comp||'').toLowerCase().includes(q) &&
+              !(l.cat||'').toLowerCase().includes(q)) return;
+
+    const catKey = l.catKey || '__sin_cat__';
+    const catName = l.cat || 'Sin categoría';
+    const compKey = l.compKey || '__sin_comp__';
+    const compName = l.comp || '';
+
+    if (!tree[catKey]) tree[catKey] = { name: catName, comps: {} };
+    if (!tree[catKey].comps[compKey]) tree[catKey].comps[compKey] = { name: compName, lugares: [] };
+    tree[catKey].comps[compKey].lugares.push({id, ...l});
+  });
+
+  const catKeys = Object.keys(tree);
+  if (catKeys.length === 0) {
+    list.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = '';
+
+  catKeys.sort((a,b) => (tree[a].name).localeCompare(tree[b].name)).forEach(catKey => {
+    const cat = tree[catKey];
+    const totalLugares = Object.values(cat.comps).reduce((s,c)=>s+c.lugares.length,0);
+    const hasPend = Object.values(cat.comps).some(c=>c.lugares.some(l=>pendCount(l.id)>0));
+
+    const catDiv = document.createElement('div');
+    catDiv.className = 'cat-block';
+    catDiv.id = 'cat-' + catKey;
+
+    let compsHTML = '';
+    Object.entries(cat.comps).sort((a,b)=>(a[1].name).localeCompare(b[1].name)).forEach(([compKey, comp]) => {
+      const compHasPend = comp.lugares.some(l => pendCount(l.id) > 0);
+      let lugaresHTML = '';
+      comp.lugares.sort((a,b)=>(a.name).localeCompare(b.name)).forEach(l => {
+        const pc = pendCount(l.id);
+        const isExp = expandedLugar === l.id;
+        lugaresHTML += `
+          <div class="lugar-row">
+            <div style="flex:1" onclick="toggleLugar('${l.id}')">
+              <span class="lugar-name">${l.name}</span>
+              ${l.ref ? `<div style="font-size:0.72rem;color:var(--muted)">${l.ref}</div>` : ''}
+            </div>
+            <span class="pend-dot ${pc===0?'zero':''}"></span>
+          </div>
+          ${isExp ? renderLugarExpanded(l.id, l) : ''}
+        `;
+      });
+
+      const compLabel = comp.name || '';
+      compsHTML += `
+        <div class="company-block">
+          ${compLabel ? `
+            <div class="company-header ${compHasPend?'comp-has-pend':''}" onclick="toggleCompany('${catKey}','${compKey}')">
+              <span class="company-title">${compLabel}</span>
+              <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:0.7rem" onclick="event.stopPropagation();editComp('${catKey}','${compKey}','${compLabel}')">✏️</button>
+            </div>
+            <div class="company-body" id="comp-${catKey}-${compKey}">${lugaresHTML}</div>
+          ` : `<div id="comp-${catKey}-${compKey}">${lugaresHTML}</div>`}
+        </div>
+      `;
+    });
+
+    catDiv.innerHTML = `
+      <div class="cat-header" onclick="toggleCat('${catKey}')">
+        <span class="cat-title">${cat.name}</span>
+        <span class="cat-count">${totalLugares} lugar${totalLugares!==1?'es':''}</span>
+        ${hasPend ? '<span style="color:var(--danger);font-size:0.8rem">●</span>' : ''}
+        <span class="cat-chevron" id="chevron-${catKey}">▾</span>
+      </div>
+      <div class="cat-body" id="catbody-${catKey}">
+        ${compsHTML}
+        <div class="cat-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editCat('${catKey}','${cat.name}')">✏️ Editar categoría</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(catDiv);
+  });
+}
+
+function renderLugarExpanded(id, l) {
+  const p = allPend[id] || {};
+  const items = Object.entries(p);
+  let pendHTML = items.length === 0
+    ? '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0">Sin reparaciones pendientes ✓</div>'
+    : items.map(([pid,pval]) => `
+        <div class="pending-item">
+          <input type="checkbox" ${pval.done?'checked':''} onchange="togglePend('${id}','${pid}',this.checked)">
+          <span class="pending-text ${pval.done?'done':''}">${pval.text}</span>
+          <button class="btn btn-danger btn-sm" style="padding:3px 8px" onclick="deletePend('${id}','${pid}')">✕</button>
+        </div>`).join('');
+
+  return `
+    <div class="lugar-expanded">
+      ${pendHTML}
+      <div class="add-pending-row">
+        <input class="input" id="pinp-${id}" placeholder="Nueva reparación..." onkeydown="if(event.key==='Enter')addPend('${id}')">
+        <button class="mic-btn" onclick="voiceSearch('pinp-${id}',null,'${id}')">🎤</button>
+        <button class="btn btn-primary btn-sm" onclick="addPend('${id}')">+</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="showEditLugar('${id}')">✏️ Editar</button>
+        <button class="btn btn-ok btn-sm" onclick="addToRuta('${id}')">📍 A la ruta</button>
+      </div>
+    </div>`;
+}
+
+function toggleCat(catKey) {
+  const body = document.getElementById('catbody-' + catKey);
+  const chev = document.getElementById('chevron-' + catKey);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleCompany(catKey, compKey) {
+  const body = document.getElementById(`comp-${catKey}-${compKey}`);
+  body.classList.toggle('open');
+}
+
+function toggleLugar(id) {
+  expandedLugar = expandedLugar === id ? null : id;
+  renderLugares(document.getElementById('loc-search').value);
+}
+
+function filterLugares() {
+  renderLugares(document.getElementById('loc-search').value);
+}
+
+// ── Pendientes desde lugares ──
+function addPend(locId) {
+  const inp = document.getElementById('pinp-' + locId);
+  const text = (inp?.value||'').trim();
+  if (!text) return;
+  R.pend(locId).push({text, done:false, ts:Date.now()});
+  inp.value = '';
+  showToast('Reparación guardada');
+}
+
+function togglePend(locId, pendId, done) {
+  R.pend(locId).child(pendId).update({done});
+}
+
+function deletePend(locId, pendId) {
+  R.pend(locId).child(pendId).remove();
+}
+
+// ══════════════════════════════════════════════
+// MODAL LUGAR — Nuevo / Editar
+// ══════════════════════════════════════════════
+function showAddLugarModal() {
+  document.getElementById('modal-lugar-title').innerHTML = 'Nuevo lugar <button class="modal-close" onclick="closeModal(\'modal-lugar\')">✕</button>';
+  document.getElementById('edit-lugar-id').value = '';
+  document.getElementById('lugar-cat-input').value = '';
+  document.getElementById('lugar-comp-input').value = '';
+  document.getElementById('lugar-name').value = '';
+  document.getElementById('lugar-ref').value = '';
+  document.getElementById('btn-delete-lugar').style.display = 'none';
+  document.getElementById('cat-suggestions').style.display = 'none';
+  document.getElementById('comp-suggestions').style.display = 'none';
+  openModal('modal-lugar');
+}
+
+function showEditLugar(id) {
+  const l = allLugares[id];
+  if (!l) return;
+  document.getElementById('modal-lugar-title').innerHTML = 'Editar lugar <button class="modal-close" onclick="closeModal(\'modal-lugar\')">✕</button>';
+  document.getElementById('edit-lugar-id').value = id;
+  document.getElementById('lugar-cat-input').value = l.cat || '';
+  document.getElementById('lugar-comp-input').value = l.comp || '';
+  document.getElementById('lugar-name').value = l.name || '';
+  document.getElementById('lugar-ref').value = l.ref || '';
+  document.getElementById('btn-delete-lugar').style.display = 'block';
+  document.getElementById('cat-suggestions').style.display = 'none';
+  document.getElementById('comp-suggestions').style.display = 'none';
+  openModal('modal-lugar');
+}
+
+// ── Sugerencias categoría ──
+function showCatSuggestions() {
+  const q = document.getElementById('lugar-cat-input').value.toLowerCase();
+  const box = document.getElementById('cat-suggestions');
+  const cats = Object.entries(allCats)
+    .filter(([k,v]) => !q || v.name.toLowerCase().includes(q))
+    .sort((a,b) => a[1].name.localeCompare(b[1].name));
+  if (!cats.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '';
+  cats.forEach(([k,v]) => {
+    const div = document.createElement('div');
+    div.className = 'loc-selector-item';
+    div.textContent = v.name;
+    div.onclick = () => {
+      document.getElementById('lugar-cat-input').value = v.name;
+      box.style.display = 'none';
+      showCompSuggestions();
+    };
+    box.appendChild(div);
+  });
+}
+
+function addCatFromInput() {
+  const name = document.getElementById('lugar-cat-input').value.trim();
+  if (!name) return;
+  document.getElementById('cat-suggestions').style.display = 'none';
+  showToast('Categoría lista: ' + name);
+}
+
+// ── Sugerencias compañía ──
+function showCompSuggestions() {
+  const catName = document.getElementById('lugar-cat-input').value.trim();
+  const q = document.getElementById('lugar-comp-input').value.toLowerCase();
+  const box = document.getElementById('comp-suggestions');
+
+  // Buscar catKey por nombre
+  const catEntry = Object.entries(allCats).find(([k,v]) => v.name.toLowerCase() === catName.toLowerCase());
+  const catKey = catEntry ? catEntry[0] : null;
+
+  // Compañías de esa categoría
+  const comps = {};
+  Object.values(allLugares)
+    .filter(l => catKey ? l.catKey === catKey : true)
+    .filter(l => l.comp)
+    .forEach(l => { comps[l.comp] = true; });
+
+  const list = Object.keys(comps).filter(c => !q || c.toLowerCase().includes(q)).sort();
+  if (!list.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '';
+  list.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'loc-selector-item';
+    div.textContent = name;
+    div.onclick = () => {
+      document.getElementById('lugar-comp-input').value = name;
+      box.style.display = 'none';
+    };
+    box.appendChild(div);
+  });
+}
+
+function addCompFromInput() {
+  const name = document.getElementById('lugar-comp-input').value.trim();
+  if (!name) return;
+  document.getElementById('comp-suggestions').style.display = 'none';
+  showToast('Compañía lista: ' + name);
+}
+
+function saveLugar() {
+  const id = document.getElementById('edit-lugar-id').value;
+  const name = document.getElementById('lugar-name').value.trim();
+  if (!name) { alert('El nombre es obligatorio'); return; }
+
+  // Categoría
+  const catName = document.getElementById('lugar-cat-input').value.trim() || 'Otros';
+  let catKey;
+  const existingCat = Object.entries(allCats).find(([k,v]) => v.name.toLowerCase() === catName.toLowerCase());
+  if (existingCat) { catKey = existingCat[0]; }
+  else { catKey = R.cats().push({name: catName}).key; }
+
+  // Compañía
+  const compName = document.getElementById('lugar-comp-input').value.trim();
+  let compKey = '';
+  if (compName) {
+    const existingComp = Object.entries(allLugares).find(([,l]) => l.comp && l.comp.toLowerCase() === compName.toLowerCase() && l.catKey === catKey);
+    compKey = existingComp ? existingComp[1].compKey : (compName.toLowerCase().replace(/\s+/g,'_') + '_' + Date.now());
+  }
+
+  const data = { name, catKey, cat: catName, compKey, comp: compName, ref: document.getElementById('lugar-ref').value.trim() };
+  if (id) { R.locs().child(id).update(data); showToast('Lugar actualizado'); }
+  else { R.locs().push(data); showToast('Lugar guardado'); }
+  closeModal('modal-lugar');
+}
+
+function deleteLugar() {
+  const id = document.getElementById('edit-lugar-id').value;
+  if (!id) return;
+  if (!confirm('¿Eliminar este lugar?')) return;
+  if (!confirm('Segunda confirmación. ¿Seguro? Se borrarán también sus reparaciones pendientes.')) return;
+  R.locs().child(id).remove();
+  db.ref(`rutafix/pendientes/${id}`).remove();
+  ruta = ruta.filter(r=>r!==id);
+  saveRuta();
+  closeModal('modal-lugar');
+  showToast('Lugar eliminado');
+}
+
+// ── Editar / borrar categoría ──
+function editCat(catKey, catName) {
+  document.getElementById('edit-cat-key').value = catKey;
+  document.getElementById('edit-cat-name').value = catName;
+  openModal('modal-edit-cat');
+}
+
+function saveCatName() {
+  const key = document.getElementById('edit-cat-key').value;
+  const name = document.getElementById('edit-cat-name').value.trim();
+  if (!name) return;
+  R.cats().child(key).update({name});
+  // Actualizar en todos los lugares de esa categoría
+  Object.entries(allLugares).filter(([id,l])=>l.catKey===key).forEach(([id])=>{
+    R.locs().child(id).update({cat:name});
+  });
+  closeModal('modal-edit-cat');
+  showToast('Categoría actualizada');
+}
+
+function deleteCat() {
+  const key = document.getElementById('edit-cat-key').value;
+  const name = document.getElementById('edit-cat-name').value;
+  if (!confirm(`¿Eliminar la categoría "${name}"?`)) return;
+  if (!confirm(`SEGUNDA CONFIRMACIÓN: Se eliminarán TODOS los lugares de "${name}" y sus reparaciones pendientes. ¿Continuar?`)) return;
+
+  // Borrar lugares y pendientes de esta categoría
+  Object.entries(allLugares).filter(([id,l])=>l.catKey===key).forEach(([id])=>{
+    R.locs().child(id).remove();
+    db.ref(`rutafix/pendientes/${id}`).remove();
+    ruta = ruta.filter(r=>r!==id);
+  });
+  R.cats().child(key).remove();
+  saveRuta();
+  closeModal('modal-edit-cat');
+  showToast('Categoría eliminada');
+}
+
+// ── Editar compañía ──
+function editComp(catKey, compKey, compName) {
+  document.getElementById('edit-comp-cat').value = catKey;
+  document.getElementById('edit-comp-key').value = compKey;
+  document.getElementById('edit-comp-name').value = compName;
+  openModal('modal-edit-comp');
+}
+
+function saveCompName() {
+  const catKey = document.getElementById('edit-comp-cat').value;
+  const compKey = document.getElementById('edit-comp-key').value;
+  const name = document.getElementById('edit-comp-name').value.trim();
+  if (!name) return;
+  Object.entries(allLugares).filter(([id,l])=>l.catKey===catKey && l.compKey===compKey).forEach(([id])=>{
+    R.locs().child(id).update({comp:name});
+  });
+  closeModal('modal-edit-comp');
+  showToast('Compañía actualizada');
+}
+
+// ══════════════════════════════════════════════
+// PANTALLA PENDIENTES
+// ══════════════════════════════════════════════
+function renderPendScreen() {
+  const list = document.getElementById('pend-screen-list');
+  const empty = document.getElementById('pend-screen-empty');
+
+  const conPend = Object.keys(allLugares).filter(id => pendCount(id) > 0);
+
+  if (conPend.length === 0) {
+    list.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = '';
+
+  conPend.sort((a,b)=>(allLugares[a].name||'').localeCompare(allLugares[b].name||'')).forEach(id => {
+    const l = allLugares[id];
+    const p = allPend[id] || {};
+    const isExp = expandedPendLugar === id;
+    const pc = pendCount(id);
+
+    const card = document.createElement('div');
+    card.className = 'pend-lugar-card';
+
+    let pendHTML = '';
+    Object.entries(p).filter(([,pv])=>!pv.done).forEach(([pid,pval])=>{
+      pendHTML += `
+        <div class="pending-item" style="padding-left:0">
+          <input type="checkbox" onchange="togglePend('${id}','${pid}',this.checked)">
+          <span class="pending-text">${pval.text}</span>
+          <button class="btn btn-danger btn-sm" style="padding:3px 8px" onclick="deletePend('${id}','${pid}')">✕</button>
+        </div>`;
+    });
+
+    card.innerHTML = `
+      <div class="pend-lugar-header" onclick="togglePendLugar('${id}')">
+        <div style="flex:1">
+          <div class="pend-lugar-name">${l.name}</div>
+          <div class="pend-lugar-cat">${l.cat||''}${l.comp?' · '+l.comp:''}</div>
+        </div>
+        <span style="background:var(--danger);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.75rem;padding:2px 8px;border-radius:99px">${pc}</span>
+      </div>
+      <div class="pend-lugar-body ${isExp?'open':''}" id="pendlug-${id}">
+        <div style="padding-top:10px">${pendHTML}</div>
+        <button class="btn btn-ok btn-sm" style="margin-top:10px" onclick="addToRuta('${id}')">📍 Añadir a mi ruta</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function togglePendLugar(id) {
+  expandedPendLugar = expandedPendLugar === id ? null : id;
+  renderPendScreen();
+}
+
+// ══════════════════════════════════════════════
+// RUTA DEL DÍA
+// ══════════════════════════════════════════════
+function renderRuta() {
+  const chain = document.getElementById('ruta-chain');
+  const emptyEl = document.getElementById('ruta-empty');
+  const clearBtn = document.getElementById('btn-clear-ruta');
+  const expandedArea = document.getElementById('ruta-expanded-area');
+
+  chain.innerHTML = '';
+  const valid = ruta.filter(id => allLugares[id]);
+
+  if (valid.length === 0) {
+    emptyEl.style.display = 'block';
+    clearBtn.style.display = 'none';
+    expandedArea.innerHTML = '';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  clearBtn.style.display = 'inline-flex';
+
+  valid.forEach((id, idx) => {
+    if (idx > 0) { const sep = document.createElement('span'); sep.className='ruta-sep'; sep.textContent='—'; chain.appendChild(sep); }
+    const l = allLugares[id];
+    const pc = pendCount(id);
+    const isExp = expandedStop === id;
+    const stop = document.createElement('div');
+    stop.className = 'ruta-stop';
+    stop.innerHTML = `
+      <div class="ruta-stop-btn ${pc>0?'has-pending':''} ${isExp?'active':''}" onclick="toggleRutaStop('${id}')">
+        <div class="ruta-stop-name">${l.name}</div>
+        ${l.comp ? `<div class="ruta-stop-sub">${l.comp}</div>` : ''}
+      </div>
+      ${isExp && pc===0 ? `<button class="ruta-stop-remove" onclick="removeFromRuta('${id}')">✕</button>` : ''}
+    `;
+    chain.appendChild(stop);
+  });
+
+  // Panel expandido — solo con pendientes
+  if (expandedStop && allLugares[expandedStop] && pendCount(expandedStop) > 0) {
+    const l = allLugares[expandedStop];
+    const p = allPend[expandedStop] || {};
+    let pendHTML = Object.entries(p).map(([pid,pval]) => `
+      <div class="pending-item">
+        <input type="checkbox" ${pval.done?'checked':''} onchange="togglePend('${expandedStop}','${pid}',this.checked)">
+        <span class="pending-text ${pval.done?'done':''}">${pval.text}</span>
+      </div>`).join('');
+
+    expandedArea.innerHTML = `
+      <div class="ruta-expanded" onclick="event.stopPropagation()">
+        <div class="ruta-expanded-title">📍 ${l.comp?l.comp+' · ':''}${l.name}</div>
+        ${pendHTML}
+        <div style="margin-top:10px">
+          <button class="btn btn-danger btn-sm" onclick="removeFromRuta('${expandedStop}')">✕ Quitar de ruta</button>
+        </div>
+      </div>`;
+  } else {
+    expandedArea.innerHTML = '';
+  }
+}
+
+function toggleRutaStop(id) {
+  expandedStop = expandedStop === id ? null : id;
+  renderRuta();
+}
+
+function collapseOnTapOutside(e) {
+  if (!expandedStop) return;
+  if (!e.target.closest('.ruta-expanded') && !e.target.closest('.ruta-stop-btn')) {
+    expandedStop = null; renderRuta();
+  }
+}
+
+function addToRuta(locId) {
+  if (!ruta.includes(locId)) {
+    ruta.push(locId);
+    saveRuta();
+    showToast('Añadido a la ruta');
+    showScreen('ruta', document.querySelectorAll('.nav-btn')[0]);
+  } else {
+    showToast('Ya está en la ruta');
+  }
+}
+
+function removeFromRuta(locId) {
+  ruta = ruta.filter(id=>id!==locId);
+  if (expandedStop===locId) expandedStop=null;
+  saveRuta(); renderRuta();
+}
+
+function clearRuta() {
+  if (!confirm('¿Borrar toda la ruta de hoy?')) return;
+  ruta=[]; expandedStop=null;
+  saveRuta(); renderRuta();
+}
+
+function filterRutaSearch() {
+  const q = document.getElementById('ruta-search').value.toLowerCase().trim();
+  const listEl = document.getElementById('ruta-search-list');
+  if (!q) { listEl.style.display='none'; return; }
+  const matches = Object.entries(allLugares).filter(([id,l])=>
+    (l.name||'').toLowerCase().includes(q)||(l.comp||'').toLowerCase().includes(q)||(l.cat||'').toLowerCase().includes(q)
+  );
+  if (!matches.length) { listEl.style.display='none'; return; }
+  listEl.style.display='block';
+  listEl.innerHTML='';
+  matches.forEach(([id,l])=>{
+    const div=document.createElement('div');
+    div.className='loc-selector-item';
+    div.innerHTML=`${l.name}${l.comp?`<div class="sub">${l.comp}</div>`:''}`;
+    div.onclick=()=>{ addToRuta(id); document.getElementById('ruta-search').value=''; listEl.style.display='none'; };
+    listEl.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════════
+// NAV / SCREENS
+// ══════════════════════════════════════════════
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// VOZ
+// ══════════════════════════════════════════════
+let recognition=null;
+function voiceSearch(inputId, callbackName, locId) {
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { alert('Tu navegador no soporta voz'); return; }
+  if (recognition) { recognition.stop(); recognition=null; return; }
+  recognition = new SR();
+  recognition.lang='es-ES'; recognition.interimResults=false;
+  const micBtns=[...document.querySelectorAll('.mic-btn')];
+  const btn=micBtns.find(b=>b.getAttribute('onclick')?.includes(inputId));
+  if(btn) btn.classList.add('listening');
+  recognition.onresult=(e)=>{
+    const t=e.results[0][0].transcript;
+    const inp=document.getElementById(inputId);
+    if(inp){ inp.value=t; if(callbackName&&window[callbackName]) window[callbackName](); if(locId) addPend(locId); }
+  };
+  recognition.onend=()=>{ recognition=null; if(btn)btn.classList.remove('listening'); };
+  recognition.onerror=()=>{ recognition=null; if(btn)btn.classList.remove('listening'); };
+  recognition.start();
+}
+
+// ══════════════════════════════════════════════
+// MODALES
+// ══════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+let toastTimer=null;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW:',e));
+}
+</script>
+</body>
+</html>
