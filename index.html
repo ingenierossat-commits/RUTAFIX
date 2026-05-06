@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RUTAFIX</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F58C2A">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+:root{
+  --bg:#0D111C;--bg2:#141927;--bg3:#1C2333;--border:#2A3347;
+  --accent:#F58C2A;--danger:#E53E3E;--ok:#38A169;
+  --text:#E8EAF0;--muted:#6B7A99;--card:#1A2035;--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+.login-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3rem;letter-spacing:6px;color:var(--accent);display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.login-sub{font-size:0.78rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;}
+.tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:300px;}
+.tech-btn{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:18px 12px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:1px;cursor:pointer;text-align:center;}
+.tech-btn:active{border-color:var(--accent);}
+.tech-ini{width:36px;height:36px;background:var(--accent);color:#0D111C;border-radius:50%;font-size:1.1rem;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;min-height:100vh;}
+.header{background:var(--bg2);border-bottom:2px solid var(--accent);padding:10px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;}
+.hdr-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:3px;color:var(--accent);display:flex;align-items:center;gap:8px;flex:1;}
+.hdr-user{font-size:0.72rem;color:var(--muted);text-align:right;line-height:1.3;cursor:pointer;}
+.hdr-user strong{color:var(--text);font-size:0.82rem;display:block;}
+.nav{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:99;}
+.nav-btn{flex:1;padding:10px 4px;background:none;border:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.76rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:3px solid transparent;}
+.nav-btn.on{color:var(--accent);border-bottom-color:var(--accent);}
+.content{flex:1;padding:14px;padding-bottom:80px;}
+
+/* ── BOTONES ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:1px;cursor:pointer;}
+.btn-p{background:var(--accent);color:#0D111C;}
+.btn-g{background:var(--bg3);color:var(--text);border:1px solid var(--border);}
+.btn-d{background:rgba(229,62,62,0.15);color:var(--danger);border:1px solid rgba(229,62,62,0.3);}
+.btn-ok{background:rgba(56,161,105,0.15);color:var(--ok);border:1px solid rgba(56,161,105,0.3);}
+.btn-sm{padding:6px 10px;font-size:0.78rem;}
+.btn-fw{width:100%;justify-content:center;margin-bottom:8px;}
+
+/* ── INPUTS ── */
+.inp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:1rem;outline:none;}
+.inp:focus{border-color:var(--accent);}
+.inp::placeholder{color:var(--muted);}
+.flabel{font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;}
+.fld{margin-bottom:12px;}
+.sug-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;}
+.sug-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.9rem;}
+.sug-item:last-child{border-bottom:none;}
+.sug-item:active{background:var(--border);}
+
+/* ── TARJETAS JERARQUÍA ── */
+.hier-block{margin-bottom:8px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+/* Nivel 1 - Categoría */
+.cat-row{background:var(--bg3);padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.cat-row-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:2px;text-transform:uppercase;flex:1;}
+.cat-chev{color:var(--muted);font-size:0.8rem;transition:transform 0.2s;flex-shrink:0;}
+.cat-chev.open{transform:rotate(180deg);}
+.cat-body{display:none;}
+.cat-body.open{display:block;}
+/* Nivel 2 - Compañía */
+.comp-row{background:var(--card);padding:11px 14px 11px 28px;display:flex;align-items:center;gap:10px;cursor:pointer;border-top:1px solid var(--border);user-select:none;}
+.comp-row-name{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:0.9rem;letter-spacing:1px;flex:1;}
+.comp-row.has-pend .comp-row-name{color:var(--danger);}
+.comp-chev{color:var(--muted);font-size:0.75rem;transition:transform 0.2s;flex-shrink:0;}
+.comp-chev.open{transform:rotate(180deg);}
+.comp-body{display:none;}
+.comp-body.open{display:block;}
+/* Nivel 3 - Lugar */
+.loc-row{background:var(--bg);padding:10px 14px 10px 42px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);cursor:pointer;}
+.loc-row-name{flex:1;font-size:0.9rem;}
+.loc-row.has-pend .loc-row-name{color:var(--danger);}
+.pend-n{background:var(--danger);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.7rem;padding:2px 6px;border-radius:99px;flex-shrink:0;}
+/* Nivel 4 - Detalle lugar expandido */
+.loc-detail{background:var(--bg2);padding:12px 14px 12px 42px;border-top:1px solid var(--border);}
+.pend-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.pend-item:last-of-type{border-bottom:none;}
+.pend-txt{flex:1;font-size:0.88rem;line-height:1.4;padding-top:2px;}
+.pend-txt.done{text-decoration:line-through;color:var(--muted);}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;margin-top:3px;}
+.add-pend-row{display:flex;gap:8px;margin-top:10px;}
+.add-pend-row .inp{flex:1;}
+.mic-btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--muted);cursor:pointer;font-size:1rem;flex-shrink:0;}
+.detail-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+/* ── RUTA ── */
+.ruta-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:14px;}
+.ruta-sep{color:var(--muted);font-size:1.1rem;}
+.ruta-stop{position:relative;}
+.stop-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 12px;background:var(--bg3);border:none;border-radius:8px;cursor:pointer;min-width:80px;min-height:48px;font-family:'Barlow Condensed',sans-serif;}
+.stop-btn.red{background:var(--danger);animation:pulse 2s infinite;}
+.stop-btn.sel{outline:2px solid var(--accent);outline-offset:2px;}
+.stop-name{font-size:0.78rem;font-weight:700;color:var(--text);text-align:center;line-height:1.2;max-width:90px;}
+.stop-sub{font-size:0.6rem;color:rgba(255,255,255,0.6);margin-top:2px;}
+.stop-x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;background:var(--danger);border:none;border-radius:50%;color:#fff;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;z-index:10;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(229,62,62,0.5);}50%{box-shadow:0 0 0 5px rgba(229,62,62,0);}}
+.stop-expanded{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;}
+.stop-exp-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:var(--accent);margin-bottom:8px;letter-spacing:1px;}
+
+/* ── PENDIENTES SCREEN ── */
+.pend-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--danger);border-radius:var(--r);margin-bottom:8px;overflow:hidden;}
+.pend-card-hdr{padding:11px 14px;cursor:pointer;}
+.pend-card-name{font-weight:600;font-size:0.92rem;}
+.pend-card-sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+.pend-card-body{display:none;padding:0 14px 12px;border-top:1px solid var(--border);}
+.pend-card-body.open{display:block;}
+
+/* ── BOTTOM BAR ── */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;z-index:98;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border-radius:16px 16px 0 0;padding:20px 16px 36px;width:100%;max-height:90vh;overflow-y:auto;animation:sup 0.22s ease;}
+@keyframes sup{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.modal-x{background:var(--bg3);border:none;color:var(--muted);width:28px;height:28px;border-radius:50%;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* ── MISC ── */
+.stitle{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-i{font-size:2.5rem;margin-bottom:8px;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ok);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;padding:10px 20px;border-radius:99px;font-size:0.88rem;opacity:0;transition:all 0.3s;pointer-events:none;z-index:300;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.dot-r{width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">
+    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#F58C2A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    RUTAFIX
+  </div>
+  <div class="login-sub">Técnicos SAT · Puertas Automáticas</div>
+  <div class="tech-grid" id="tech-grid"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="hdr-logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F58C2A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      RUTAFIX
+    </div>
+    <div class="hdr-user" onclick="logout()">
+      <strong id="hdr-name">—</strong>
+      <span>Cambiar ↩</span>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn on" onclick="goTab('ruta',this)">📍 RUTA</button>
+    <button class="nav-btn" onclick="goTab('pendientes',this)">⚠️ PENDIENTES</button>
+    <button class="nav-btn" onclick="goTab('lugares',this)">🏨 LUGARES</button>
+  </nav>
+
+  <!-- RUTA -->
+  <div id="tab-ruta" class="content" onclick="rutaTapOut(event)">
+    <div class="stitle">Ruta de hoy — <span id="ruta-fecha" style="color:var(--accent)"></span></div>
+    <div id="ruta-chain" class="ruta-chain"></div>
+    <div id="ruta-exp"></div>
+    <div id="ruta-empty" class="empty" style="display:none">
+      <div class="empty-i">🗺️</div><p>Sin paradas. Busca un lugar abajo.</p>
+    </div>
+    <div style="margin-top:12px">
+      <div style="display:flex;gap:8px;margin-bottom:6px">
+        <input class="inp" id="ruta-q" placeholder="🔍 Añadir parada..." oninput="rutaSearch()" autocomplete="off" style="flex:1">
+        <button class="mic-btn" onclick="mic('ruta-q','rutaSearch')">🎤</button>
+      </div>
+      <div id="ruta-sug" class="sug-box" style="display:none"></div>
+    </div>
+    <div style="height:10px"></div>
+    <button class="btn btn-d btn-sm" id="btn-clr-ruta" onclick="clearRuta()" style="display:none">🗑 Borrar ruta</button>
+  </div>
+
+  <!-- PENDIENTES -->
+  <div id="tab-pendientes" class="content" style="display:none">
+    <div class="stitle">Reparaciones pendientes</div>
+    <div id="pend-screen"></div>
+    <div id="pend-empty" class="empty" style="display:none">
+      <div class="empty-i">✅</div><p>Todo en orden.</p>
+    </div>
+  </div>
+
+  <!-- LUGARES -->
+  <div id="tab-lugares" class="content" style="display:none">
+    <div id="lugares-content"></div>
+    <div id="lugares-empty" class="empty" style="display:none">
+      <div class="empty-i">📭</div><p>Sin lugares todavía.</p>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="btn btn-p" style="flex:1" id="btn-main" onclick="mainAction()">+ Nuevo lugar</button>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo / Editar lugar -->
+<div class="modal-overlay" id="m-lugar">
+  <div class="modal">
+    <div class="modal-title" id="m-lugar-title">Nuevo lugar <button class="modal-x" onclick="closeM('m-lugar')">✕</button></div>
+    <input type="hidden" id="ml-id">
+    <div class="fld">
+      <label class="flabel">Categoría</label>
+      <input class="inp" id="ml-cat" placeholder="HOTELES, FARMACIAS..." autocomplete="off" oninput="mlCatSug()" onfocus="mlCatSug()">
+      <div id="ml-cat-sug" class="sug-box" style="display:none;margin-top:4px"></div>
+    </div>
+    <div class="fld">
+      <label class="flabel">Compañía (opcional)</label>
+      <input class="inp" id="ml-comp" placeholder="THB, Iberostar..." autocomplete="off" oninput="mlCompSug()" onfocus="mlCompSug()">
+      <div id="ml-comp-sug" class="sug-box" style="display:none;margin-top:4px"></div>
+    </div>
+    <div class="fld">
+      <label class="flabel">Nombre del lugar</label>
+      <input class="inp" id="ml-name" placeholder="Gran Playa, Can Misses...">
+    </div>
+    <button class="btn btn-p btn-fw" onclick="saveLugar()">Guardar lugar</button>
+    <button class="btn btn-d btn-fw" id="ml-del" onclick="deleteLugar()" style="display:none">Eliminar lugar</button>
+  </div>
+</div>
+
+<!-- MODAL: Editar categoría -->
+<div class="modal-overlay" id="m-cat">
+  <div class="modal">
+    <div class="modal-title">Editar categoría <button class="modal-x" onclick="closeM('m-cat')">✕</button></div>
+    <input type="hidden" id="mc-key">
+    <div class="fld"><label class="flabel">Nombre</label><input class="inp" id="mc-name"></div>
+    <button class="btn btn-p btn-fw" onclick="saveCat()">Guardar</button>
+    <button class="btn btn-d btn-fw" onclick="deleteCat()">⚠️ Eliminar categoría y todo su contenido</button>
+  </div>
+</div>
+
+<!-- MODAL: Editar compañía -->
+<div class="modal-overlay" id="m-comp">
+  <div class="modal">
+    <div class="modal-title">Editar compañía <button class="modal-x" onclick="closeM('m-comp')">✕</button></div>
+    <input type="hidden" id="mcomp-key">
+    <div class="fld"><label class="flabel">Nombre</label><input class="inp" id="mcomp-name"></div>
+    <button class="btn btn-p btn-fw" onclick="saveComp()">Guardar</button>
+    <button class="btn btn-d btn-fw" onclick="deleteComp()">⚠️ Eliminar compañía y sus lugares</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ FIREBASE ══
+const FC={apiKey:"AIzaSyChMXx5ZcleAo5oqzPvo1K_Af_wgQkh-LQ",authDomain:"listify-16b5d.firebaseapp.com",databaseURL:"https://listify-16b5d-default-rtdb.europe-west1.firebasedatabase.app",projectId:"listify-16b5d",storageBucket:"listify-16b5d.firebasestorage.app",messagingSenderId:"238610923350",appId:"1:238610923350:web:cd5c2c3fb23b5c0afba0f7"};
+let fbApp,db;
+try{fbApp=firebase.app('rutafix');}catch(e){fbApp=firebase.initializeApp(FC,'rutafix');}
+db=firebase.database(fbApp);
+const DB={cats:()=>db.ref('rutafix/cats'),comps:()=>db.ref('rutafix/comps'),locs:()=>db.ref('rutafix/locs'),pend:(id)=>db.ref('rutafix/pend/'+id),ruta:(uid)=>db.ref('rutafix/rutas/'+uid)};
+
+// ══ TÉCNICOS ══
+const TECNS=[{id:'bernat',n:'BERNAT'},{id:'jordi',n:'JORDI'},{id:'juan_carlos',n:'JUAN CARLOS'},{id:'bernat_fill',n:'BERNAT FILL'}];
+
+// ══ ESTADO ══
+let ME=null, CATS={}, COMPS={}, LOCS={}, PEND={}, RUTA=[];
+let activeTab='ruta', expandedLoc=null, expandedStop=null;
+
+// ══ INIT ══
+window.onload=()=>{
+  document.getElementById('ruta-fecha').textContent=new Date().toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+  const g=document.getElementById('tech-grid');
+  TECNS.forEach(t=>{
+    const b=document.createElement('button');b.className='tech-btn';
+    b.innerHTML=`<div class="tech-ini">${t.n[0]}</div>${t.n}`;
+    b.onclick=()=>login(t);g.appendChild(b);
+  });
+  const s=localStorage.getItem('rf_user');
+  if(s){const t=TECNS.find(t=>t.id===s);if(t)login(t);}
+};
+
+function login(tech){
+  ME=tech;localStorage.setItem('rf_user',tech.id);
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('app').style.flexDirection='column';
+  document.getElementById('hdr-name').textContent=tech.n;
+  startDB();
+}
+
+function logout(){
+  DB.cats().off();DB.comps().off();DB.locs().off();
+  db.ref('rutafix/pend').off();
+  if(ME)DB.ruta(ME.id).off();
+  ME=null;CATS={};COMPS={};LOCS={};PEND={};RUTA=[];expandedLoc=null;expandedStop=null;
+  localStorage.removeItem('rf_user');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+// ══ DB LISTENERS ══
+function startDB(){
+  DB.cats().on('value',s=>{CATS={};if(s.exists())s.forEach(c=>{CATS[c.key]=c.val();});draw();});
+  DB.comps().on('value',s=>{COMPS={};if(s.exists())s.forEach(c=>{COMPS[c.key]=c.val();});draw();});
+  DB.locs().on('value',s=>{LOCS={};if(s.exists())s.forEach(c=>{LOCS[c.key]=c.val();});draw();});
+  db.ref('rutafix/pend').on('value',s=>{PEND={};if(s.exists())s.forEach(ls=>{PEND[ls.key]={};ls.forEach(ps=>{PEND[ls.key][ps.key]=ps.val();});});draw();});
+  DB.ruta(ME.id).on('value',s=>{RUTA=s.exists()?(s.val()||[]):[];if(!Array.isArray(RUTA))RUTA=Object.values(RUTA);drawRuta();});
+}
+
+function draw(){
+  if(activeTab==='ruta')drawRuta();
+  else if(activeTab==='pendientes')drawPend();
+  else if(activeTab==='lugares')drawLugares();
+}
+
+// ══ TABS ══
+function goTab(name,btn){
+  activeTab=name;
+  expandedLoc=null;
+  ['ruta','pendientes','lugares'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  // Bottom bar
+  const bb=document.getElementById('btn-main');
+  if(name==='ruta'||name==='pendientes'){
+    document.querySelector('.bottom-bar').style.display='none';
+  } else {
+    document.querySelector('.bottom-bar').style.display='flex';
+    bb.textContent='+ Nuevo lugar';
+  }
+  draw();
+}
+
+function mainAction(){openMLugar(null);}
+
+// ══ HELPERS ══
+function pc(id){const p=PEND[id];if(!p)return 0;return Object.values(p).filter(x=>!x.done).length;}
+function catOfLoc(l){return CATS[l.catKey]?.name||l.cat||'?';}
+function compOfLoc(l){if(!l.compKey)return '';return COMPS[l.compKey]?.name||l.comp||'';}
+function locsOfComp(catKey,compKey){return Object.entries(LOCS).filter(([,l])=>l.catKey===catKey&&(compKey?l.compKey===compKey:(!l.compKey||l.compKey===''))).sort((a,b)=>a[1].name.localeCompare(b[1].name));}
+function compHasPend(compKey){return Object.entries(LOCS).filter(([,l])=>l.compKey===compKey).some(([id])=>pc(id)>0);}
+function catHasPend(catKey){return Object.entries(LOCS).filter(([,l])=>l.catKey===catKey).some(([id])=>pc(id)>0);}
+function saveRuta(){DB.ruta(ME.id).set(RUTA);}
+
+// ══ ESTADO ACORDEÓN ══
+let openCatKey=null, openCompKey=null, openCompCatKey=null;
+
+// ══ DRAW LUGARES ══
+function drawLugares(){
+  const cont=document.getElementById('lugares-content');
+  const empty=document.getElementById('lugares-empty');
+
+  const tree={};
+  Object.entries(LOCS).forEach(([id,l])=>{
+    const ck=l.catKey||'__?__';
+    const cname=CATS[ck]?.name||l.cat||'Sin categoría';
+    if(!tree[ck])tree[ck]={name:cname,comps:{},sinComp:[]};
+    if(l.compKey&&l.compKey!==''){
+      const cpk=l.compKey;
+      const cpname=COMPS[cpk]?.name||l.comp||'';
+      if(!tree[ck].comps[cpk])tree[ck].comps[cpk]={name:cpname,locs:[]};
+      tree[ck].comps[cpk].locs.push([id,l]);
+    } else {
+      tree[ck].sinComp.push([id,l]);
+    }
+  });
+
+  Object.entries(CATS).forEach(([ck,c])=>{if(!tree[ck])tree[ck]={name:c.name,comps:{},sinComp:[]};});
+
+  const catKeys=Object.keys(tree).sort((a,b)=>tree[a].name.localeCompare(tree[b].name));
+  if(!catKeys.length){cont.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  cont.innerHTML='';
+
+  catKeys.forEach(ck=>{
+    const cat=tree[ck];
+    const hp=catHasPend(ck);
+    const totalLocs=Object.values(cat.comps).reduce((s,c)=>s+c.locs.length,0)+cat.sinComp.length;
+    const catOpen=true; // siempre abierto por defecto la primera vez
+
+    const block=document.createElement('div');
+    block.className='hier-block';
+
+    // ── Cat header ──
+    const catRow=document.createElement('div');
+    catRow.className='cat-row';
+    catRow.innerHTML=`
+      <div style="flex:1">
+        <span class="cat-row-name">${cat.name}</span>
+        <span style="font-size:0.72rem;color:var(--muted);margin-left:8px">${totalLocs} lugar${totalLocs!==1?'es':''}</span>
+      </div>
+      ${hp?'':''}
+      <span class="cat-chev${openCatKey===ck?' open':''}" id="cc-${ck}">▾</span>
+    `;
+    // Botón editar categoría separado
+    const catEditBtn=document.createElement('button');
+    catEditBtn.className='btn btn-g btn-sm';
+    catEditBtn.textContent='✏️';
+    catEditBtn.style.marginLeft='6px';
+    catEditBtn.addEventListener('click',e=>{e.stopPropagation();openMCat(ck);});
+    catRow.appendChild(catEditBtn);
+    catRow.addEventListener('click',()=>{
+      const body=document.getElementById('cb-'+ck);
+      const chev=document.getElementById('cc-'+ck);
+      const isOpen=body.classList.contains('open');
+      catKeys.forEach(k=>{
+        const b=document.getElementById('cb-'+k);
+        const c=document.getElementById('cc-'+k);
+        if(b){b.classList.remove('open');}
+        if(c){c.classList.remove('open');}
+      });
+      if(!isOpen){body.classList.add('open');chev.classList.add('open');openCatKey=ck;}
+      else{openCatKey=null;}
+      openCompKey=null;openCompCatKey=null;expandedLoc=null;
+      drawLugares();
+    });
+
+    // ── Cat body ──
+    const catBody=document.createElement('div');
+    catBody.className=`cat-body${openCatKey===ck?' open':''}`;
+    catBody.id='cb-'+ck;
+
+    // Compañías
+    const compKeys=Object.keys(cat.comps).sort((a,b)=>cat.comps[a].name.localeCompare(cat.comps[b].name));
+    compKeys.forEach(cpk=>{
+      const comp=cat.comps[cpk];
+      const chp=compHasPend(cpk);
+
+      const compRow=document.createElement('div');
+      compRow.className=`comp-row${chp?' has-pend':''}`;
+      compRow.innerHTML=`
+        <div style="flex:1">
+          <span class="comp-row-name">${comp.name}</span>
+          <span style="font-size:0.7rem;color:var(--muted);margin-left:6px">${comp.locs.length}</span>
+        </div>
+        ${chp?'<div class="dot-r"></div>':''}
+        <span class="comp-chev${openCompKey===cpk&&openCompCatKey===ck?' open':''}" id="chev-${cpk}">▾</span>
+      `;
+      const compEditBtn=document.createElement('button');
+      compEditBtn.className='btn btn-g btn-sm';
+      compEditBtn.textContent='✏️';
+      compEditBtn.style.marginLeft='6px';
+      compEditBtn.addEventListener('click',e=>{e.stopPropagation();openMComp(cpk);});
+      compRow.appendChild(compEditBtn);
+      compRow.addEventListener('click',()=>{
+        const body=document.getElementById('compb-'+cpk);
+        const chev=document.getElementById('chev-'+cpk);
+        const isOpen=body.classList.contains('open');
+        compKeys.forEach(k=>{
+          const b=document.getElementById('compb-'+k);
+          const c=document.getElementById('chev-'+k);
+          if(b){b.classList.remove('open');}
+          if(c){c.classList.remove('open');}
+        });
+        const scb=document.getElementById('compb-sc-'+ck);
+        const scc=document.getElementById('chev-sc-'+ck);
+        if(scb)scb.classList.remove('open');
+        if(scc)scc.classList.remove('open');
+        if(!isOpen){body.classList.add('open');chev.classList.add('open');openCompKey=cpk;openCompCatKey=ck;}
+        else{openCompKey=null;openCompCatKey=null;}
+        expandedLoc=null;
+        drawLugares();
+      });
+
+      const compBody=document.createElement('div');
+      compBody.className=`comp-body${openCompKey===cpk&&openCompCatKey===ck?' open':''}`;
+      compBody.id='compb-'+cpk;
+
+      comp.locs.forEach(([id,l])=>compBody.appendChild(makeLoc(id,l)));
+
+      // Fila añadir lugar inline
+      const addRow=document.createElement('div');
+      addRow.style.cssText='padding:8px 14px 8px 42px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg2);';
+      const addInp=document.createElement('input');
+      addInp.className='inp';addInp.placeholder='+ Nuevo lugar...';addInp.style.flex='1';
+      const addBtn=document.createElement('button');
+      addBtn.className='btn btn-p btn-sm';addBtn.textContent='+ Lugar';
+      const doAdd=()=>{
+        const name=addInp.value.trim();if(!name)return;
+        const catName=CATS[ck]?.name||'';
+        const compName=comp.name;
+        DB.locs().push({name,catKey:ck,cat:catName,compKey:cpk,comp:compName});
+        addInp.value='';addInp.focus();showToast('Lugar añadido');
+      };
+      addBtn.addEventListener('click',doAdd);
+      addInp.addEventListener('keydown',e=>{if(e.key==='Enter')doAdd();});
+      addRow.appendChild(addInp);addRow.appendChild(addBtn);
+      compBody.appendChild(addRow);
+
+      catBody.appendChild(compRow);
+      catBody.appendChild(compBody);
+    });
+
+    // Sin compañía — directamente bajo la categoría, sin fila intermedia
+    if(cat.sinComp.length){
+      cat.sinComp.sort((a,b)=>a[1].name.localeCompare(b[1].name)).forEach(([id,l])=>catBody.appendChild(makeLoc(id,l,true)));
+    }
+
+    block.appendChild(catRow);
+    block.appendChild(catBody);
+    cont.appendChild(block);
+  });
+}
+
+function makeLoc(id,l,direct){
+  const n=pc(id);
+  const isExp=expandedLoc===id;
+
+  const wrap=document.createElement('div');
+
+  const row=document.createElement('div');
+  row.className=`loc-row${n>0?' has-pend':''}`;
+  if(direct)row.style.paddingLeft='18px';
+  row.innerHTML=`<span class="loc-row-name">${l.name}</span>${n>0?`<span class="pend-n">${n}</span>`:'<span style="color:var(--ok);font-size:0.8rem">✓</span>'}`;
+  row.addEventListener('click',()=>{
+    expandedLoc=expandedLoc===id?null:id;
+    drawLugares();
+  });
+
+  wrap.appendChild(row);
+
+  if(isExp){
+    const det=document.createElement('div');
+    det.className='loc-detail';
+    const p=PEND[id]||{};
+    const items=Object.entries(p);
+    let ph=items.length===0
+      ?'<div style="color:var(--muted);font-size:0.82rem;padding:4px 0">Sin reparaciones pendientes ✓</div>'
+      :items.map(([pid,pv])=>`<div class="pend-item"><input type="checkbox" ${pv.done?'checked':''} onchange="chkPend('${id}','${pid}',this.checked)"><span class="pend-txt${pv.done?' done':''}">${pv.text}</span><button class="btn btn-d btn-sm" style="padding:3px 7px" onclick="delPend('${id}','${pid}')">✕</button></div>`).join('');
+    det.innerHTML=`
+      ${ph}
+      <div class="add-pend-row" style="margin-top:10px">
+        <input class="inp" id="pi-${id}" placeholder="Nueva reparación..." onkeydown="if(event.key==='Enter')addPend('${id}')">
+        <button class="mic-btn" onclick="mic('pi-${id}','','${id}')">🎤</button>
+        <button class="btn btn-p btn-sm" onclick="addPend('${id}')">+</button>
+      </div>
+      <div class="detail-actions">
+        <button class="btn btn-g btn-sm" onclick="openMLugar('${id}')">✏️ Editar</button>
+        <button class="btn btn-ok btn-sm" onclick="addToRuta('${id}')">📍 A la ruta</button>
+      </div>
+    `;
+    wrap.appendChild(det);
+  }
+  return wrap;
+}
+
+// ══ PENDIENTES ══
+function drawPend(){
+  const cont=document.getElementById('pend-screen');
+  const empty=document.getElementById('pend-empty');
+  const ids=Object.keys(LOCS).filter(id=>pc(id)>0).sort((a,b)=>(LOCS[a].name||'').localeCompare(LOCS[b].name||''));
+  if(!ids.length){cont.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';cont.innerHTML='';
+  ids.forEach(id=>{
+    const l=LOCS[id];const p=PEND[id]||{};const n=pc(id);
+    const card=document.createElement('div');card.className='pend-card';
+    const bodyId='pb-'+id;
+    const items=Object.entries(p).filter(([,v])=>!v.done).map(([pid,pv])=>`<div class="pend-item"><input type="checkbox" onchange="chkPend('${id}','${pid}',this.checked)"><span class="pend-txt">${pv.text}</span><button class="btn btn-d btn-sm" style="padding:3px 7px" onclick="delPend('${id}','${pid}')">✕</button></div>`).join('');
+    card.innerHTML=`
+      <div class="pend-card-hdr" onclick="document.getElementById('${bodyId}').classList.toggle('open')">
+        <div class="pend-card-name">${l.name}</div>
+        <div class="pend-card-sub">${catOfLoc(l)}${compOfLoc(l)?' · '+compOfLoc(l):''} · ${n} pendiente${n!==1?'s':''}</div>
+      </div>
+      <div class="pend-card-body" id="${bodyId}">
+        <div style="padding-top:8px">${items}</div>
+        <button class="btn btn-ok btn-sm" style="margin-top:10px" onclick="addToRuta('${id}')">📍 A la ruta</button>
+      </div>`;
+    cont.appendChild(card);
+  });
+}
+
+// ══ RUTA ══
+function drawRuta(){
+  const chain=document.getElementById('ruta-chain');
+  const empty=document.getElementById('ruta-empty');
+  const clrBtn=document.getElementById('btn-clr-ruta');
+  const exp=document.getElementById('ruta-exp');
+  chain.innerHTML='';
+  const valid=RUTA.filter(id=>LOCS[id]);
+  if(!valid.length){empty.style.display='block';clrBtn.style.display='none';exp.innerHTML='';return;}
+  empty.style.display='none';clrBtn.style.display='inline-flex';
+  valid.forEach((id,i)=>{
+    if(i>0){const s=document.createElement('span');s.className='ruta-sep';s.textContent='—';chain.appendChild(s);}
+    const l=LOCS[id];const n=pc(id);const isSel=expandedStop===id;
+    const wrap=document.createElement('div');wrap.className='ruta-stop';
+    const btn=document.createElement('button');
+    btn.className=`stop-btn${n>0?' red':''}${isSel?' sel':''}`;
+    btn.innerHTML=`<div class="stop-name">${l.name}</div>${compOfLoc(l)?`<div class="stop-sub">${compOfLoc(l)}</div>`:''}`;
+    btn.addEventListener('click',()=>{expandedStop=expandedStop===id?null:id;drawRuta();});
+    wrap.appendChild(btn);
+    if(isSel&&n===0){
+      const x=document.createElement('button');x.className='stop-x';x.textContent='✕';
+      x.addEventListener('click',e=>{e.stopPropagation();removeFromRuta(id);});
+      wrap.appendChild(x);
+    }
+    chain.appendChild(wrap);
+  });
+  if(expandedStop&&LOCS[expandedStop]&&pc(expandedStop)>0){
+    const l=LOCS[expandedStop];const p=PEND[expandedStop]||{};
+    const div=document.createElement('div');div.className='stop-expanded';
+    div.innerHTML=`<div class="stop-exp-title">📍 ${compOfLoc(l)?compOfLoc(l)+' › ':''}${l.name}</div>`+
+      Object.entries(p).map(([pid,pv])=>`<div class="pend-item"><input type="checkbox" ${pv.done?'checked':''} onchange="chkPend('${expandedStop}','${pid}',this.checked)"><span class="pend-txt${pv.done?' done':''}">${pv.text}</span></div>`).join('')+
+      `<div style="margin-top:10px"><button class="btn btn-d btn-sm" onclick="removeFromRuta('${expandedStop}')">✕ Quitar de ruta</button></div>`;
+    exp.innerHTML='';exp.appendChild(div);
+  } else {exp.innerHTML='';}
+}
+
+function rutaTapOut(e){
+  if(!expandedStop)return;
+  if(!e.target.closest('.stop-expanded')&&!e.target.closest('.stop-btn')){expandedStop=null;drawRuta();}
+}
+function rutaSearch(){
+  const q=document.getElementById('ruta-q').value.toLowerCase().trim();
+  const box=document.getElementById('ruta-sug');
+  if(!q){box.style.display='none';return;}
+  const m=Object.entries(LOCS).filter(([,l])=>(l.name||'').toLowerCase().includes(q)||(compOfLoc(l)||'').toLowerCase().includes(q));
+  if(!m.length){box.style.display='none';return;}
+  box.style.display='block';box.innerHTML='';
+  m.forEach(([id,l])=>{
+    const d=document.createElement('div');d.className='sug-item';
+    d.innerHTML=`${l.name}${compOfLoc(l)?`<div style="font-size:0.75rem;color:var(--muted)">${compOfLoc(l)}</div>`:''}`;
+    d.onclick=()=>{addToRuta(id);document.getElementById('ruta-q').value='';box.style.display='none';};
+    box.appendChild(d);
+  });
+}
+function addToRuta(id){if(!RUTA.includes(id)){RUTA.push(id);saveRuta();showToast('Añadido a la ruta');}else showToast('Ya está en la ruta');}
+function removeFromRuta(id){RUTA=RUTA.filter(r=>r!==id);if(expandedStop===id)expandedStop=null;saveRuta();drawRuta();}
+function clearRuta(){if(!confirm('¿Borrar toda la ruta?'))return;RUTA=[];expandedStop=null;saveRuta();drawRuta();}
+
+// ══ PENDIENTES OPS ══
+function chkPend(lid,pid,done){DB.pend(lid).child(pid).update({done});}
+function delPend(lid,pid){DB.pend(lid).child(pid).remove();}
+function addPend(lid){
+  const inp=document.getElementById('pi-'+lid);
+  const t=(inp?.value||'').trim();if(!t)return;
+  DB.pend(lid).push({text:t,done:false,ts:Date.now()});
+  inp.value='';showToast('Reparación guardada');
+}
+
+// ══ MODAL LUGAR ══
+function openMLugar(id){
+  document.getElementById('ml-id').value=id||'';
+  if(id&&LOCS[id]){
+    const l=LOCS[id];
+    document.getElementById('m-lugar-title').innerHTML='Editar lugar <button class="modal-x" onclick="closeM(\'m-lugar\')">✕</button>';
+    document.getElementById('ml-cat').value=catOfLoc(l);
+    document.getElementById('ml-comp').value=compOfLoc(l);
+    document.getElementById('ml-name').value=l.name||'';
+    document.getElementById('ml-del').style.display='block';
+  } else {
+    document.getElementById('m-lugar-title').innerHTML='Nuevo lugar <button class="modal-x" onclick="closeM(\'m-lugar\')">✕</button>';
+    document.getElementById('ml-cat').value='';
+    document.getElementById('ml-comp').value='';
+    document.getElementById('ml-name').value='';
+    document.getElementById('ml-del').style.display='none';
+  }
+  document.getElementById('ml-cat-sug').style.display='none';
+  document.getElementById('ml-comp-sug').style.display='none';
+  openM('m-lugar');
+}
+
+function mlCatSug(){
+  const q=document.getElementById('ml-cat').value.toLowerCase();
+  const box=document.getElementById('ml-cat-sug');
+  const items=Object.values(CATS).filter(c=>!q||c.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+  if(!items.length){box.style.display='none';return;}
+  box.style.display='block';box.innerHTML='';
+  items.forEach(c=>{const d=document.createElement('div');d.className='sug-item';d.textContent=c.name;d.onclick=()=>{document.getElementById('ml-cat').value=c.name;box.style.display='none';mlCompSug();};box.appendChild(d);});
+}
+function mlCompSug(){
+  const catName=document.getElementById('ml-cat').value.trim().toUpperCase();
+  const q=document.getElementById('ml-comp').value.toLowerCase();
+  const box=document.getElementById('ml-comp-sug');
+  const catEntry=Object.entries(CATS).find(([,c])=>c.name.toUpperCase()===catName);
+  const catKey=catEntry?catEntry[0]:null;
+  const items=Object.entries(COMPS).filter(([,c])=>(!catKey||c.catKey===catKey)&&(!q||c.name.toLowerCase().includes(q))).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  if(!items.length){box.style.display='none';return;}
+  box.style.display='block';box.innerHTML='';
+  items.forEach(([,c])=>{const d=document.createElement('div');d.className='sug-item';d.textContent=c.name;d.onclick=()=>{document.getElementById('ml-comp').value=c.name;box.style.display='none';};box.appendChild(d);});
+}
+
+function saveLugar(){
+  const id=document.getElementById('ml-id').value;
+  const name=document.getElementById('ml-name').value.trim();
+  if(!name){alert('El nombre es obligatorio');return;}
+  const catName=document.getElementById('ml-cat').value.trim().toUpperCase()||'OTROS';
+  const compName=document.getElementById('ml-comp').value.trim();
+
+  // Cat
+  let catKey;
+  const ec=Object.entries(CATS).find(([,c])=>c.name.toUpperCase()===catName);
+  if(ec){catKey=ec[0];}else{catKey=DB.cats().push({name:catName}).key;}
+
+  // Comp
+  let compKey='',comp='';
+  if(compName){
+    const ecp=Object.entries(COMPS).find(([,c])=>c.catKey===catKey&&c.name.toLowerCase()===compName.toLowerCase());
+    if(ecp){compKey=ecp[0];comp=ecp[1].name;}
+    else{compKey=DB.comps().push({name:compName,catKey}).key;comp=compName;}
+  }
+
+  const data={name,catKey,cat:catName,compKey,comp};
+  if(id){DB.locs().child(id).update(data);showToast('Lugar actualizado');}
+  else{DB.locs().push(data);showToast('Lugar guardado');}
+  closeM('m-lugar');
+}
+
+function deleteLugar(){
+  const id=document.getElementById('ml-id').value;if(!id)return;
+  if(!confirm('¿Eliminar este lugar y sus reparaciones?'))return;
+  DB.locs().child(id).remove();db.ref('rutafix/pend/'+id).remove();
+  RUTA=RUTA.filter(r=>r!==id);saveRuta();closeM('m-lugar');showToast('Eliminado');
+}
+
+// ══ MODAL CAT ══
+function openMCat(key){document.getElementById('mc-key').value=key;document.getElementById('mc-name').value=CATS[key]?.name||'';openM('m-cat');}
+function saveCat(){
+  const key=document.getElementById('mc-key').value;
+  const name=document.getElementById('mc-name').value.trim().toUpperCase();if(!name)return;
+  DB.cats().child(key).update({name});
+  Object.entries(LOCS).filter(([,l])=>l.catKey===key).forEach(([id])=>DB.locs().child(id).update({cat:name}));
+  closeM('m-cat');showToast('Categoría actualizada');
+}
+function deleteCat(){
+  const key=document.getElementById('mc-key').value;const name=CATS[key]?.name||'';
+  if(!confirm(`¿Eliminar "${name}"?`))return;
+  if(!confirm(`SEGUNDA CONFIRMACIÓN: Se borrará todo el contenido de "${name}". ¿Seguro?`))return;
+  Object.entries(LOCS).filter(([,l])=>l.catKey===key).forEach(([id])=>{DB.locs().child(id).remove();db.ref('rutafix/pend/'+id).remove();RUTA=RUTA.filter(r=>r!==id);});
+  Object.entries(COMPS).filter(([,c])=>c.catKey===key).forEach(([ck])=>DB.comps().child(ck).remove());
+  DB.cats().child(key).remove();saveRuta();closeM('m-cat');showToast('Categoría eliminada');
+}
+
+// ══ MODAL COMP ══
+function openMComp(key){document.getElementById('mcomp-key').value=key;document.getElementById('mcomp-name').value=COMPS[key]?.name||'';openM('m-comp');}
+function saveComp(){
+  const key=document.getElementById('mcomp-key').value;
+  const name=document.getElementById('mcomp-name').value.trim();if(!name)return;
+  DB.comps().child(key).update({name});
+  Object.entries(LOCS).filter(([,l])=>l.compKey===key).forEach(([id])=>DB.locs().child(id).update({comp:name}));
+  closeM('m-comp');showToast('Compañía actualizada');
+}
+function deleteComp(){
+  const key=document.getElementById('mcomp-key').value;const name=COMPS[key]?.name||'';
+  if(!confirm(`¿Eliminar "${name}" y todos sus lugares?`))return;
+  if(!confirm('SEGUNDA CONFIRMACIÓN: ¿Seguro?'))return;
+  Object.entries(LOCS).filter(([,l])=>l.compKey===key).forEach(([id])=>{DB.locs().child(id).remove();db.ref('rutafix/pend/'+id).remove();RUTA=RUTA.filter(r=>r!==id);});
+  DB.comps().child(key).remove();saveRuta();closeM('m-comp');showToast('Compañía eliminada');
+}
+
+// ══ VOZ ══
+let recog=null;
+function mic(inputId,cbName,locId){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Sin soporte de voz');return;}
+  if(recog){recog.stop();recog=null;return;}
+  recog=new SR();recog.lang='es-ES';recog.interimResults=false;
+  recog.onresult=e=>{const t=e.results[0][0].transcript;const inp=document.getElementById(inputId);if(inp){inp.value=t;if(cbName&&window[cbName])window[cbName]();if(locId)addPend(locId);}};
+  recog.onend=()=>{recog=null;};recog.start();
+}
+
+// ══ MODALES ══
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ══ TOAST ══
+let toastT=null;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');if(toastT)clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+</body>
+</html>
